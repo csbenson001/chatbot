@@ -29,10 +29,12 @@ export async function proxy(request: NextRequest) {
 
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-  // Don't force guest auth redirect - let the page handle auth state
-  // This prevents redirect loops when cookies don't work properly
+  // Redirect unauthenticated users to guest auth
   if (!token) {
-    return NextResponse.next();
+    const redirectUrl = encodeURIComponent(new URL(request.url).pathname);
+    return NextResponse.redirect(
+      new URL(`${base}/api/auth/guest?redirectUrl=${redirectUrl}`, request.url)
+    );
   }
 
   const isGuest = guestRegex.test(token?.email ?? "");
