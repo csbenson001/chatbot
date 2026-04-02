@@ -2,10 +2,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { guestRegex } from "./lib/constants";
 
-// Use secure cookies when running on Vercel (v0 preview) or in production
-const useSecureCookies = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
-
-console.log("[v0] proxy module loaded - useSecureCookies:", useSecureCookies, "VERCEL:", process.env.VERCEL);
+// Detect if we're running over HTTPS (v0 preview, production) vs HTTP (localhost)
+function shouldUseSecureCookies(request: NextRequest): boolean {
+  const url = new URL(request.url);
+  return url.protocol === "https:";
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,6 +19,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const useSecureCookies = shouldUseSecureCookies(request);
+  
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
@@ -26,12 +29,10 @@ export async function proxy(request: NextRequest) {
 
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
+  // Don't force guest auth redirect - let the page handle auth state
+  // This prevents redirect loops when cookies don't work properly
   if (!token) {
-    const redirectUrl = encodeURIComponent(new URL(request.url).pathname);
-
-    return NextResponse.redirect(
-      new URL(`${base}/api/auth/guest?redirectUrl=${redirectUrl}`, request.url)
-    );
+    return NextResponse.next();
   }
 
   const isGuest = guestRegex.test(token?.email ?? "");
