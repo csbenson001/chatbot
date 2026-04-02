@@ -2,8 +2,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { guestRegex } from "./lib/constants";
 
-// Use secure cookies when running on Vercel (including v0 preview) or in production
+// Use secure cookies when running on Vercel (v0 preview) or in production
 const useSecureCookies = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
+
+console.log("[v0] proxy module loaded - useSecureCookies:", useSecureCookies, "VERCEL:", process.env.VERCEL);
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
