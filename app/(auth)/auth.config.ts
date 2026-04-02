@@ -2,7 +2,7 @@ import type { NextAuthConfig } from "next-auth";
 
 const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-// Force secure cookies when running in v0 preview (HTTPS) even though NODE_ENV is development
+// Force secure cookies when running on Vercel (including v0 preview) even though NODE_ENV is development
 const useSecureCookies = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
 
 export const authConfig = {
